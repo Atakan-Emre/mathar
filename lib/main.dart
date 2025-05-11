@@ -73,7 +73,7 @@ class HomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'Mathar',
+                  'MathAr',
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
@@ -99,7 +99,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 40),
                 const Text(
-                  'Samsung cihazınız için hazırlanmış AR uygulaması',
+                  'Mobil cihazınız için hazırlanmış AR uygulaması',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -233,6 +233,9 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
   // 3D nesnenin doğru cevabı
   late String _correctAnswer;
   
+  // Görüntüleme modu
+  bool _isARMode = false;
+  
   @override
   void initState() {
     super.initState();
@@ -342,6 +345,13 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
       _showQuestion = true;
     });
   }
+  
+  void _toggleViewMode() {
+    setState(() {
+      _isARMode = !_isARMode;
+      _isObjectAdded = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -355,28 +365,29 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.categoryName} - 3D Modeller'),
+        title: Text('${widget.categoryName} - ${_isARMode ? 'AR Modu' : '3D Modeller'}'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
       body: Stack(
         children: [
-          // Kamera görüntüsü
-          _isCameraInitialized
-              ? SizedBox(
-                  width: double.infinity,
-                  height: double.infinity,
-                  child: CameraPreview(_cameraController!),
-                )
-              : Container(
-                  color: Colors.black,
-                  child: const Center(
-                    child: CircularProgressIndicator(),
+          // Arka plan - Kamera veya normal arka plan
+          if (!_isARMode)
+            _isCameraInitialized
+                ? SizedBox(
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: CameraPreview(_cameraController!),
+                  )
+                : Container(
+                    color: Colors.black,
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
                   ),
-                ),
           
-          // 3D Model gösterimi
-          if (_isObjectAdded)
+          // Model gösterimi
+          if (_isObjectAdded || _isARMode)
             Container(
               alignment: Alignment.center,
               width: MediaQuery.of(context).size.width,
@@ -385,16 +396,17 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
                 backgroundColor: Colors.transparent,
                 src: _modelPath,
                 alt: 'Bir 3D model',
-                ar: false,
-                autoRotate: true,
-                cameraControls: true,
+                ar: _isARMode, // AR modu etkinken AR özelliğini etkinleştir
+                arModes: const ['scene-viewer', 'webxr', 'quick-look'],
+                autoRotate: !_isARMode, // Sadece normal modda otomatik döndür
+                cameraControls: !_isARMode, // Sadece normal modda kamera kontrolü
               ),
             ),
           
           // Soru kartı
           Align(
             alignment: Alignment.topCenter,
-            child: _showQuestion && _isObjectAdded
+            child: _showQuestion && _isObjectAdded && !_isARMode
                 ? Container(
                     margin: const EdgeInsets.only(top: 20),
                     padding: const EdgeInsets.all(16),
@@ -445,12 +457,26 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
+                  // 3D Modeli Gösterme Butonu (sadece normal modda)
+                  if (!_isARMode)
                   FloatingActionButton(
                     onPressed: _show3DShape,
                     backgroundColor: Colors.blue,
                     heroTag: 'show3DModel',
                     child: const Icon(Icons.view_in_ar),
                   ),
+                  
+                  // Modu Değiştirme Butonu
+                  FloatingActionButton(
+                    onPressed: _toggleViewMode,
+                    backgroundColor: Colors.purple,
+                    heroTag: 'toggleMode',
+                    tooltip: _isARMode ? 'Normal Mod' : 'AR Modu',
+                    child: Icon(_isARMode ? Icons.view_in_ar : Icons.view_in_ar),
+                  ),
+                  
+                  // Yenileme Butonu (sadece normal modda)
+                  if (!_isARMode)
                   FloatingActionButton(
                     onPressed: () {
                       setState(() {
@@ -488,6 +514,32 @@ class _ARScreenState extends State<ARScreen> with SingleTickerProviderStateMixin
               ],
             ),
           ),
+          
+          // AR modunda yardım metni
+          if (_isARMode)
+            Positioned(
+              bottom: 100,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'AR simgesine dokunun ve modeli gerçek dünyada görüntüleyin',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
