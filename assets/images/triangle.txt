@@ -1,0 +1,11 @@
+Bu dosya tekstür için bir placeholder'dır.
+
+AR düzlem tespiti için assets/images/triangle.png dosyası gereklidir.
+Bu dosya 64x64 veya 128x128 boyutlarında basit bir PNG görüntüsüdür.
+
+AR uygulamasını test etmek için en basit yol:
+1. Düz bir yüzeyi tespit etmek
+2. Gösterilen "Doğrudan Quiz'e Geç" butonuna tıklamak
+3. Quiz sorularını normal şekilde yanıtlamak
+
+Not: 3D modeller olmadan da uygulama çalışacak şekilde tasarlanmıştır. 
